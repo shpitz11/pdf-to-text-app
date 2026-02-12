@@ -43,16 +43,7 @@ export default function Home() {
       if (!ocrResponse.ok) throw new Error('שגיאה ב-DocuPipe');
       const ocrData = await ocrResponse.json();
 
-      setProcessingStep('Claude מתקן ומשפר...');
-      const claudeResponse = await fetch('/api/claude', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: ocrData.text })
-      });
-      if (!claudeResponse.ok) throw new Error('שגיאה ב-Claude');
-      const claudeData = await claudeResponse.json();
-
-      setExtractedText(claudeData.text);
+      setExtractedText(ocrData.text);
       setProcessingStep('');
     } catch (err) {
       setError(err.message || 'שגיאה בהמרת הקובץ');
@@ -69,7 +60,7 @@ export default function Home() {
     <div style={{ minHeight: '100vh', backgroundColor: '#f3f4f6', padding: '24px', direction: 'rtl', fontFamily: 'Arial, sans-serif' }}>
       <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
         <h1 style={{ fontSize: '28px', fontWeight: 'bold', marginBottom: '8px' }}>המרת PDF לטקסט</h1>
-        <p style={{ color: '#666', marginBottom: '24px' }}>DocuPipe OCR + Claude</p>
+        <p style={{ color: '#666', marginBottom: '24px' }}>DocuPipe OCR</p>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
           <div style={{ backgroundColor: 'white', padding: '24px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
