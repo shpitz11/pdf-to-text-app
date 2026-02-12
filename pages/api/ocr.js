@@ -43,10 +43,9 @@ export default async function handler(req, res) {
 
       const resultData = await resultResponse.json();
 
-      if (resultData.status === 'completed' || resultData.parsed) {
-        return res.status(200).json({ 
-          text: resultData.parsed?.text || resultData.text || JSON.stringify(resultData)
-        });
+      if (resultData.status === 'completed') {
+        const text = resultData.result?.text || '';
+        return res.status(200).json({ text: text });
       }
 
       await new Promise(resolve => setTimeout(resolve, 1000));
