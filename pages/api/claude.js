@@ -7,7 +7,7 @@ export default async function handler(req, res) {
     const { text } = req.body;
     const apiKey = process.env.CLAUDE_API_KEY;
 
-    const promptText = "קיבלתי טקסט שחולץ מ-PDF באמצעות OCR. אנא בדוק ותקן אותו בדיוק לפי הכללים הבאים. החזר רק את הטקסט המתוקן, ללא הסברים. כללים: 1. אל תוסיף מילים שלא קיימות בטקסט המקורי. 2. אל תשנה את המבנה או הסדר. 3. תקן רק שגיאות OCR ברורות. זיהוי קריטי - ה מול ח: ה פתוחה בצד שמאל למטה. ח סגורה למטה עם קו תחתון רציף. זיהוי קריטי - י מול גרשיים: י נוגעת בשורת הבסיס, עבה, אות מלאה. גרשיים מרחפות מעל השורה, דקות מאוד, לא נוגעות בבסיס. דוגמאות: יחד (לא יחיד), תא (לא תא), מר (לא מר). הטקסט בגופן David. הנה הטקסט לתיקון:\n\n" + text;
+    const promptText = "קיבלתי טקסט שחולץ מ-PDF באמצעות OCR. אנא בדוק ותקן אותו בדיוק לפי הכללים הבאים. החזר רק את הטקסט המתוקן, ללא הסברים. כללים: 1. אל תוסיף מילים שלא קיימות בטקסט המקורי. 2. אל תשנה את המבנה או הסדר. 3. תקן רק שגיאות OCR ברורות. זיהוי קריטי - ה מול ח: ה פתוחה בצד שמאל למטה. ח סגורה למטה עם קו תחתון רציף. זיהוי קריטי - י מול גרשיים: י נוגעת בשורת הבסיס, עבה, אות מלאה. גרשיים מרחפות מעל השורה, דקות מאוד, לא נוגעות בבסיס. הטקסט בגופן David. הנה הטקסט לתיקון:\n\n" + text;
 
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
@@ -23,11 +23,12 @@ export default async function handler(req, res) {
       })
     });
 
+    const data = await response.json();
+
     if (!response.ok) {
-      throw new Error('Claude API failed');
+      return res.status(500).json({ error: data.error?.message || JSON.stringify(data) });
     }
 
-    const data = await response.json();
     const resultText = data.content
       .map(item => (item.type === "text" ? item.text : ""))
       .filter(Boolean)
