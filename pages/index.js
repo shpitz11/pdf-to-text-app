@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
 export default function Home() {
   const [file, setFile] = useState(null);
@@ -85,6 +85,14 @@ export default function Home() {
     URL.revokeObjectURL(url);
   };
 
+  const makeRunningText = () => {
+    const editor = document.getElementById('editor');
+    if (!editor) return;
+    const text = editor.innerText;
+    const runningText = text.replace(/\n+/g, ' ').replace(/\s+/g, ' ').trim();
+    editor.innerHTML = runningText;
+  };
+
   const clearAll = () => {
     setFile(null);
     setHasText(false);
@@ -139,6 +147,7 @@ export default function Home() {
             <div style={{ backgroundColor: '#f9fafb', borderBottom: '1px solid #e5e7eb', padding: '10px 16px', display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
               <button onClick={copyToClipboard} disabled={!hasText} style={{ padding: '8px 12px', backgroundColor: hasText ? 'white' : '#eee', border: '1px solid #d1d5db', borderRadius: '4px', cursor: hasText ? 'pointer' : 'not-allowed', opacity: hasText ? 1 : 0.5 }}>📋 העתק</button>
               <button onClick={saveToWord} disabled={!hasText} style={{ padding: '8px 12px', backgroundColor: hasText ? '#16a34a' : '#ccc', color: 'white', border: 'none', borderRadius: '4px', cursor: hasText ? 'pointer' : 'not-allowed', fontWeight: 'bold' }}>💾 שמור ל-Word</button>
+              <button onClick={makeRunningText} disabled={!hasText} style={{ padding: '8px 12px', backgroundColor: hasText ? '#8b5cf6' : '#ccc', color: 'white', border: 'none', borderRadius: '4px', cursor: hasText ? 'pointer' : 'not-allowed', fontWeight: 'bold' }}>⟷ הפוך לטקסט רץ</button>
               
               <div style={{ width: '1px', height: '24px', backgroundColor: '#d1d5db', margin: '0 8px' }} />
               
