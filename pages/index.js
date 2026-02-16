@@ -5,16 +5,7 @@ export default function Home() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingStep, setProcessingStep] = useState('');
   const [error, setError] = useState('');
-  const [showEditor, setShowEditor] = useState(false);
-
-  useEffect(() => {
-    if (showEditor && typeof window !== 'undefined') {
-      const editor = document.getElementById('editor');
-      if (editor) {
-        editor.focus();
-      }
-    }
-  }, [showEditor]);
+  const [hasText, setHasText] = useState(false);
 
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
@@ -50,8 +41,8 @@ export default function Home() {
       if (!ocrResponse.ok) throw new Error('שגיאה ב-DocuPipe');
       const ocrData = await ocrResponse.json();
 
-      setShowEditor(true);
       setProcessingStep('');
+      setHasText(true);
       
       setTimeout(() => {
         const editor = document.getElementById('editor');
@@ -94,45 +85,70 @@ export default function Home() {
     URL.revokeObjectURL(url);
   };
 
+  const clearAll = () => {
+    setFile(null);
+    setHasText(false);
+    setError('');
+    const editor = document.getElementById('editor');
+    if (editor) {
+      editor.innerHTML = '';
+    }
+    const fileInput = document.getElementById('fileInput');
+    if (fileInput) {
+      fileInput.value = '';
+    }
+  };
+
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#f3f4f6', padding: '24px', direction: 'rtl', fontFamily: 'Arial, sans-serif' }}>
-      <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+      <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
         <h1 style={{ fontSize: '28px', fontWeight: 'bold', marginBottom: '8px' }}>המרת PDF לטקסט</h1>
         <p style={{ color: '#666', marginBottom: '24px' }}>DocuPipe OCR</p>
 
-        {!showEditor ? (
-          <div style={{ backgroundColor: 'white', padding: '40px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', maxWidth: '500px', margin: '0 auto', textAlign: 'center' }}>
-            <h2 style={{ marginBottom: '24px' }}>העלאת קובץ PDF</h2>
+        <div style={{ display: 'grid', gridTemplateColumns: '350px 1fr', gap: '24px' }}>
+          
+          {/* צד ימין - העלאת קובץ */}
+          <div style={{ backgroundColor: 'white', padding: '24px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', height: 'fit-content' }}>
+            <h2 style={{ marginBottom: '16px', fontSize: '18px' }}>העלאת קובץ PDF</h2>
             
-            <div style={{ border: '2px dashed #ccc', borderRadius: '8px', padding: '40px', marginBottom: '16px', cursor: 'pointer' }} onClick={() => document.getElementById('fileInput').click()}>
-              <p style={{ fontSize: '18px', marginBottom: '8px' }}>📄</p>
-              <p>לחץ להעלאת קובץ PDF</p>
+            <div style={{ border: '2px dashed #ccc', borderRadius: '8px', padding: '30px', textAlign: 'center', marginBottom: '16px', cursor: 'pointer' }} onClick={() => document.getElementById('fileInput').click()}>
+              <p style={{ fontSize: '32px', marginBottom: '8px' }}>📄</p>
+              <p>לחץ להעלאת קובץ</p>
               <input id="fileInput" type="file" accept=".pdf" onChange={handleFileChange} style={{ display: 'none' }} />
             </div>
 
-            {file && <p style={{ color: '#2563eb', marginBottom: '16px' }}>נבחר: {file.name}</p>}
-            {error && <p style={{ color: '#dc2626', marginBottom: '16px' }}>{error}</p>}
-            {processingStep && <p style={{ color: '#ca8a04', marginBottom: '16px' }}>{processingStep}</p>}
+            {file && <p style={{ color: '#2563eb', marginBottom: '16px', fontSize: '14px', wordBreak: 'break-all' }}>נבחר: {file.name}</p>}
+            {error && <p style={{ color: '#dc2626', marginBottom: '16px', fontSize: '14px' }}>{error}</p>}
+            {processingStep && <p style={{ color: '#ca8a04', marginBottom: '16px', fontSize: '14px' }}>{processingStep}</p>}
 
-            <button onClick={convertPDFToText} disabled={!file || isProcessing} style={{ width: '100%', padding: '14px', backgroundColor: (!file || isProcessing) ? '#ccc' : '#2563eb', color: 'white', border: 'none', borderRadius: '8px', cursor: (!file || isProcessing) ? 'not-allowed' : 'pointer', fontSize: '16px', fontWeight: 'bold' }}>
+            <button onClick={convertPDFToText} disabled={!file || isProcessing} style={{ width: '100%', padding: '14px', backgroundColor: (!file || isProcessing) ? '#ccc' : '#2563eb', color: 'white', border: 'none', borderRadius: '8px', cursor: (!file || isProcessing) ? 'not-allowed' : 'pointer', fontSize: '16px', fontWeight: 'bold', marginBottom: '12px' }}>
               {isProcessing ? 'מעבד...' : 'המר לטקסט'}
             </button>
+
+            {hasText && (
+              <button onClick={clearAll} style={{ width: '100%', padding: '12px', backgroundColor: '#ef4444', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '14px' }}>
+                נקה הכל
+              </button>
+            )}
           </div>
-        ) : (
+
+          {/* צד שמאל - עורך טקסט */}
           <div style={{ backgroundColor: 'white', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', overflow: 'hidden' }}>
+            
+            {/* סרגל כלים */}
             <div style={{ backgroundColor: '#f9fafb', borderBottom: '1px solid #e5e7eb', padding: '10px 16px', display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
-              <button onClick={copyToClipboard} title="העתק" style={{ padding: '8px 12px', backgroundColor: 'white', border: '1px solid #d1d5db', borderRadius: '4px', cursor: 'pointer' }}>📋 העתק</button>
-              <button onClick={saveToWord} title="שמור ל-Word" style={{ padding: '8px 12px', backgroundColor: '#16a34a', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>💾 שמור ל-Word</button>
+              <button onClick={copyToClipboard} disabled={!hasText} style={{ padding: '8px 12px', backgroundColor: hasText ? 'white' : '#eee', border: '1px solid #d1d5db', borderRadius: '4px', cursor: hasText ? 'pointer' : 'not-allowed', opacity: hasText ? 1 : 0.5 }}>📋 העתק</button>
+              <button onClick={saveToWord} disabled={!hasText} style={{ padding: '8px 12px', backgroundColor: hasText ? '#16a34a' : '#ccc', color: 'white', border: 'none', borderRadius: '4px', cursor: hasText ? 'pointer' : 'not-allowed', fontWeight: 'bold' }}>💾 שמור ל-Word</button>
               
               <div style={{ width: '1px', height: '24px', backgroundColor: '#d1d5db', margin: '0 8px' }} />
               
-              <button onClick={() => execCommand('bold')} style={{ padding: '6px 12px', backgroundColor: 'white', border: '1px solid #d1d5db', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>B</button>
-              <button onClick={() => execCommand('italic')} style={{ padding: '6px 12px', backgroundColor: 'white', border: '1px solid #d1d5db', borderRadius: '4px', cursor: 'pointer', fontStyle: 'italic' }}>I</button>
-              <button onClick={() => execCommand('underline')} style={{ padding: '6px 12px', backgroundColor: 'white', border: '1px solid #d1d5db', borderRadius: '4px', cursor: 'pointer', textDecoration: 'underline' }}>U</button>
+              <button onClick={() => execCommand('bold')} disabled={!hasText} style={{ padding: '6px 12px', backgroundColor: 'white', border: '1px solid #d1d5db', borderRadius: '4px', cursor: hasText ? 'pointer' : 'not-allowed', fontWeight: 'bold', opacity: hasText ? 1 : 0.5 }}>B</button>
+              <button onClick={() => execCommand('italic')} disabled={!hasText} style={{ padding: '6px 12px', backgroundColor: 'white', border: '1px solid #d1d5db', borderRadius: '4px', cursor: hasText ? 'pointer' : 'not-allowed', fontStyle: 'italic', opacity: hasText ? 1 : 0.5 }}>I</button>
+              <button onClick={() => execCommand('underline')} disabled={!hasText} style={{ padding: '6px 12px', backgroundColor: 'white', border: '1px solid #d1d5db', borderRadius: '4px', cursor: hasText ? 'pointer' : 'not-allowed', textDecoration: 'underline', opacity: hasText ? 1 : 0.5 }}>U</button>
               
               <div style={{ width: '1px', height: '24px', backgroundColor: '#d1d5db', margin: '0 8px' }} />
               
-              <select onChange={(e) => execCommand('fontSize', e.target.value)} defaultValue="3" style={{ padding: '6px', borderRadius: '4px', border: '1px solid #d1d5db' }}>
+              <select onChange={(e) => execCommand('fontSize', e.target.value)} disabled={!hasText} defaultValue="3" style={{ padding: '6px', borderRadius: '4px', border: '1px solid #d1d5db', opacity: hasText ? 1 : 0.5 }}>
                 <option value="1">קטן</option>
                 <option value="2">קטן+</option>
                 <option value="3">רגיל</option>
@@ -141,25 +157,22 @@ export default function Home() {
                 <option value="6">כותרת</option>
               </select>
               
-              <input type="color" onChange={(e) => execCommand('foreColor', e.target.value)} title="צבע טקסט" defaultValue="#000000" style={{ width: '32px', height: '32px', padding: '0', border: '1px solid #d1d5db', borderRadius: '4px', cursor: 'pointer' }} />
-              <input type="color" onChange={(e) => execCommand('hiliteColor', e.target.value)} title="צבע סימון" defaultValue="#ffff00" style={{ width: '32px', height: '32px', padding: '0', border: '1px solid #d1d5db', borderRadius: '4px', cursor: 'pointer' }} />
+              <input type="color" onChange={(e) => execCommand('foreColor', e.target.value)} disabled={!hasText} title="צבע טקסט" defaultValue="#000000" style={{ width: '32px', height: '32px', padding: '0', border: '1px solid #d1d5db', borderRadius: '4px', cursor: hasText ? 'pointer' : 'not-allowed', opacity: hasText ? 1 : 0.5 }} />
+              <input type="color" onChange={(e) => execCommand('hiliteColor', e.target.value)} disabled={!hasText} title="צבע סימון" defaultValue="#ffff00" style={{ width: '32px', height: '32px', padding: '0', border: '1px solid #d1d5db', borderRadius: '4px', cursor: hasText ? 'pointer' : 'not-allowed', opacity: hasText ? 1 : 0.5 }} />
               
               <div style={{ width: '1px', height: '24px', backgroundColor: '#d1d5db', margin: '0 8px' }} />
               
-              <button onClick={() => execCommand('justifyRight')} style={{ padding: '6px 10px', backgroundColor: 'white', border: '1px solid #d1d5db', borderRadius: '4px', cursor: 'pointer' }}>⫢</button>
-              <button onClick={() => execCommand('justifyCenter')} style={{ padding: '6px 10px', backgroundColor: 'white', border: '1px solid #d1d5db', borderRadius: '4px', cursor: 'pointer' }}>☰</button>
-              <button onClick={() => execCommand('justifyLeft')} style={{ padding: '6px 10px', backgroundColor: 'white', border: '1px solid #d1d5db', borderRadius: '4px', cursor: 'pointer' }}>⫤</button>
+              <button onClick={() => execCommand('justifyRight')} disabled={!hasText} style={{ padding: '6px 10px', backgroundColor: 'white', border: '1px solid #d1d5db', borderRadius: '4px', cursor: hasText ? 'pointer' : 'not-allowed', opacity: hasText ? 1 : 0.5 }}>⫢</button>
+              <button onClick={() => execCommand('justifyCenter')} disabled={!hasText} style={{ padding: '6px 10px', backgroundColor: 'white', border: '1px solid #d1d5db', borderRadius: '4px', cursor: hasText ? 'pointer' : 'not-allowed', opacity: hasText ? 1 : 0.5 }}>☰</button>
+              <button onClick={() => execCommand('justifyLeft')} disabled={!hasText} style={{ padding: '6px 10px', backgroundColor: 'white', border: '1px solid #d1d5db', borderRadius: '4px', cursor: hasText ? 'pointer' : 'not-allowed', opacity: hasText ? 1 : 0.5 }}>⫤</button>
               
               <div style={{ width: '1px', height: '24px', backgroundColor: '#d1d5db', margin: '0 8px' }} />
               
-              <button onClick={() => execCommand('undo')} style={{ padding: '6px 10px', backgroundColor: 'white', border: '1px solid #d1d5db', borderRadius: '4px', cursor: 'pointer' }}>↩ בטל</button>
-              <button onClick={() => execCommand('redo')} style={{ padding: '6px 10px', backgroundColor: 'white', border: '1px solid #d1d5db', borderRadius: '4px', cursor: 'pointer' }}>↪ חזור</button>
-              
-              <div style={{ marginRight: 'auto' }} />
-              
-              <button onClick={() => { setShowEditor(false); setFile(null); }} style={{ padding: '8px 12px', backgroundColor: '#ef4444', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>קובץ חדש</button>
+              <button onClick={() => execCommand('undo')} disabled={!hasText} style={{ padding: '6px 10px', backgroundColor: 'white', border: '1px solid #d1d5db', borderRadius: '4px', cursor: hasText ? 'pointer' : 'not-allowed', opacity: hasText ? 1 : 0.5 }}>↩</button>
+              <button onClick={() => execCommand('redo')} disabled={!hasText} style={{ padding: '6px 10px', backgroundColor: 'white', border: '1px solid #d1d5db', borderRadius: '4px', cursor: hasText ? 'pointer' : 'not-allowed', opacity: hasText ? 1 : 0.5 }}>↪</button>
             </div>
 
+            {/* אזור העריכה */}
             <div
               id="editor"
               contentEditable="true"
@@ -170,11 +183,14 @@ export default function Home() {
                 outline: 'none',
                 fontSize: '14px',
                 lineHeight: '1.8',
-                fontFamily: 'David, Arial, sans-serif'
+                fontFamily: 'David, Arial, sans-serif',
+                color: hasText ? '#000' : '#999'
               }}
-            />
+            >
+              {!hasText && 'הטקסט המחולץ יופיע כאן...'}
+            </div>
           </div>
-        )}
+        </div>
       </div>
     </div>
   );
